@@ -1,226 +1,239 @@
-CREATE DATABASE IF NOT EXISTS sc;
-USE sc;
+create database sc;
+use sc;
 
-
-CREATE TABLE Provider (
-    username VARCHAR(50) UNIQUE NOT NULL,
-    ProviderID INT AUTO_INCREMENT PRIMARY KEY,
-    OrganizationName VARCHAR(100) NOT NULL,
-    ProviderName VARCHAR(100) NOT NULL,
-    Email VARCHAR(100) NOT NULL,
-    passh VARCHAR(255) NOT NULL,
-    website VARCHAR(150),
-    statusof_provider ENUM('Active','Inactive') DEFAULT 'Inactive',
-    Phone VARCHAR(15),
-    Address VARCHAR(255),
-    INDEX idx_status (statusof_provider)
-);
-
-CREATE TABLE Student (
-    StudentID INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    passh VARCHAR(255) NOT NULL,
-    Name VARCHAR(100) NOT NULL,
-    Email VARCHAR(100) UNIQUE NOT NULL,
-    dob DATE NOT NULL,
-    College VARCHAR(150),
-    Yearof_study INT,
-    GPA DECIMAL(3,2) NOT NULL
-);
-
-CREATE TABLE Admin (
-    AdminID INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    passh VARCHAR(255) NOT NULL,
-    Name VARCHAR(100) NOT NULL,
-    Email VARCHAR(100) UNIQUE NOT NULL,
-    Role ENUM('SuperAdmin','Reviewer','Staff') DEFAULT 'Staff'
-);
-
-CREATE TABLE Scholarship (
-    ScholarshipID INT AUTO_INCREMENT PRIMARY KEY,
-    ProviderID INT NOT NULL,
-    Title VARCHAR(150) NOT NULL,
-    Description TEXT,
-    Amount DECIMAL(10,2) NOT NULL,
-    MaxStudents INT NOT NULL,
-    Deadline DATE,
-    status ENUM('Open','Closed','Under Review') DEFAULT 'Open',
-    min_GPA DECIMAL(3,2) DEFAULT 0.00,
-    FOREIGN KEY (ProviderID) REFERENCES Provider(ProviderID) ON DELETE CASCADE,
-    INDEX idx_status (status),
-    INDEX idx_deadline (Deadline)
-);
-
-CREATE TABLE Application (
-    ApplicationID INT AUTO_INCREMENT PRIMARY KEY,
-    StudentID INT NOT NULL,
-    ScholarshipID INT NOT NULL,
-    DateApplied DATE DEFAULT (CURRENT_DATE),
-    Status ENUM('Pending','Approved','Rejected','Awarded') DEFAULT 'Pending',
-    ReviewBy INT NULL,
-    Award_date DATE DEFAULT NULL,
-    Amount_Granted DECIMAL(10,2) DEFAULT NULL,
-    UNIQUE KEY (StudentID, ScholarshipID),
-    FOREIGN KEY (StudentID) REFERENCES Student(StudentID) ON DELETE CASCADE,
-    FOREIGN KEY (ScholarshipID) REFERENCES Scholarship(ScholarshipID) ON DELETE CASCADE,
-    FOREIGN KEY (ReviewBy) REFERENCES Admin(AdminID) On Delete Set Null,
-    INDEX idx_status (Status),
-    INDEX idx_date (DateApplied)
-);
-
-CREATE TABLE Document (
-    DocumentID INT AUTO_INCREMENT PRIMARY KEY,
-    ApplicationID INT NOT NULL,
-    DocTypeID ENUM('Transcript','passportsize-photo','income-caste certificate','adhar card') NOT NULL,
-    file_data MEDIUMBLOB NOT NULL,
-    FOREIGN KEY (ApplicationID) REFERENCES Application(ApplicationID) ON DELETE CASCADE
+create table provider (
+    ProviderID int auto_increment primary key,
+    username varchar(50) unique not null,
+    ProviderName varchar(100) not null,
+    OrganizationName varchar(100) not null,
+    Email varchar(100) not null,
+    passh varchar(255) not null,
+    website varchar(150),
+    statusof_provider enum('Active','Inactive') default 'Inactive',
+    Phone varchar(15),
+    Address varchar(255),
+    index idx_status (statusof_provider)
 );
 
 
-DELIMITER $$
 
--- Trigger 1: Check GPA before an application is INSERTED
-CREATE TRIGGER trg_CheckGPAOnApply
-BEFORE INSERT ON Application
-FOR EACH ROW
-BEGIN
-    DECLARE student_gpa DECIMAL(3,2);
-    DECLARE required_gpa DECIMAL(3,2);
-
-    SELECT GPA INTO student_gpa 
-    FROM Student 
-    WHERE StudentID = NEW.StudentID;
-    
-    SELECT min_GPA INTO required_gpa 
-    FROM Scholarship 
-    WHERE ScholarshipID = NEW.ScholarshipID;
-    
-    IF student_gpa < required_gpa THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Application rejected: Your GPA is below the minimum requirement for this scholarship.';
-    END IF;
-END$$
-
--- Trigger 2: Prevents awarding more students than the scholarship's limit
-CREATE TRIGGER trg_PreventAwardLimitExceed
-BEFORE UPDATE ON Application
-FOR EACH ROW
-BEGIN
-    DECLARE max_students INT;
-    DECLARE awarded_count INT;
-    
-    IF NEW.Status = 'Awarded' AND OLD.Status <> 'Awarded' THEN
-        
-        SELECT MaxStudents INTO max_students 
-        FROM Scholarship 
-        WHERE ScholarshipID = NEW.ScholarshipID;
-
-        SELECT COUNT(*) INTO awarded_count 
-        FROM Application 
-        WHERE ScholarshipID = NEW.ScholarshipID AND Status = 'Awarded';
-            
-        IF awarded_count >= max_students THEN
-            SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Error: Cannot award this scholarship. The maximum student limit has been reached.';
-        END IF;
-    END IF;
-END$$
-
-DELIMITER ;
+create table student (
+    StudentID int auto_increment primary key,
+    username varchar(50) unique not null,
+    passh varchar(255) not null,
+    Name varchar(100) not null,
+    Email varchar(100) unique not null,
+    dob date not null,
+    College varchar(150),
+    Yearof_study int,
+    GPA decimal(3,2) not null
+);
 
 
--- =======================================================
--- 4. FUNCTIONS
--- =======================================================
-DELIMITER $$
 
--- Function 1: Get the age of a pending application in days
-CREATE FUNCTION fn_GetApplicationAge(
-    p_application_id INT
+create table admin (
+    AdminID int auto_increment primary key,
+    username varchar(50) unique not null,
+    passh varchar(255) not null,
+    Name varchar(100) not null,
+    Email varchar(100) unique not null,
+    Role enum('SuperAdmin','Reviewer','Staff') default 'Staff'
+);
+
+
+
+
+create table scholarship (
+    ScholarshipID int auto_increment primary key,
+    ProviderID int not null,
+    Title varchar(150) not null,
+    Description text,
+    Amount decimal(10,2) not null,
+    MaxStudents int not null,
+    Deadline date,
+    status enum('Open','Closed','Under Review') default 'Open',
+    min_GPA decimal(3,2) default 0.00,
+    foreign key (ProviderID) references provider(ProviderID) on delete cascade,
+    index idx_status (status),
+    index idx_deadline (Deadline)
+);
+
+
+
+
+create table application (
+    ApplicationID int auto_increment primary key,
+    StudentID int not null,
+    ScholarshipID int not null,
+    DateApplied date default (current_date),
+    Status enum('Pending','Approved','Rejected','Awarded') default 'Pending',
+    ReviewBy int null,
+    Award_date date default null,
+    Amount_Granted decimal(10,2) default null,
+    unique key (StudentID, ScholarshipID),
+    foreign key (StudentID) references student(StudentID) on delete cascade,
+    foreign key (ScholarshipID) references scholarship(ScholarshipID) on delete cascade,
+    foreign key (ReviewBy) references admin(AdminID) on delete set null,
+    index idx_status (Status),
+    index idx_date (DateApplied)
+);
+
+
+
+
+create table document (
+    DocumentID int auto_increment primary key,
+    ApplicationID int not null,
+    DocTypeID enum('Transcript','passportsize-photo','income-caste certificate','adhar card') not null,
+    file_data mediumblob not null,
+    foreign key (ApplicationID) references application(ApplicationID) on delete cascade
+);
+
+
+
+
+delimiter $$
+
+-- trg 1: prevent application if gpa doesn't meet scholarship criteria
+
+
+create trigger trg_CheckGPAOnApply
+before insert on application
+for each row
+begin
+    declare student_gpa decimal(3,2);
+    declare required_gpa decimal(3,2);
+
+    select GPA into student_gpa 
+    from student 
+    where StudentID = new.StudentID;
+
+    select min_GPA into required_gpa 
+    from scholarship 
+    where ScholarshipID = new.ScholarshipID;
+
+    if student_gpa < required_gpa then
+        signal sqlstate '45000'
+        set message_text = 'Application rejected: Your GPA is below the minimum requirement for this scholarship.';
+    end if;
+end$$
+
+
+
+-- trg 2: stop awarding if max student limit is already reached
+create trigger trg_PreventAwardLimitExceed
+before update on application
+for each row
+begin
+    declare max_students int;
+    declare awarded_count int;
+
+    if new.Status = 'Awarded' and old.Status <> 'Awarded' then
+        select MaxStudents into max_students 
+        from scholarship 
+        where ScholarshipID = new.ScholarshipID;
+
+        select count(*) into awarded_count 
+        from application 
+        where ScholarshipID = new.ScholarshipID 
+        and Status = 'Awarded';
+
+        if awarded_count >= max_students then
+            signal sqlstate '45000'
+            set message_text = 'Error: Scholarship limit reached. No more students can be awarded.';
+        end if;
+    end if;
+end$$
+
+delimiter ;
+
+
+FUNCTIONS: 
+
+delimiter $$
+
+-- fn: retn the no of days since an appn was sub
+
+create function fn_GetApplicationAge(p_application_id int)
+returns int
+reads sql data
+begin
+    declare submission_date date;
+
+    select DateApplied into submission_date
+    from application
+    where ApplicationID = p_application_id;
+
+    return datediff(curdate(), submission_date);
+end$$
+
+
+
+-- fn: cal total amt granted by a specific pro
+create function fn_GetTotalAllocatedAmount(p_provider_id int)
+returns decimal(12,2)
+reads sql data
+begin
+    declare total_awarded decimal(12,2);
+
+    select sum(A.Amount_Granted) into total_awarded
+    from application A
+    join scholarship S on A.ScholarshipID = S.ScholarshipID
+    where S.ProviderID = p_provider_id 
+    and A.Status = 'Awarded';
+
+    return ifnull(total_awarded, 0.00);
+end$$
+
+delimiter ;
+
+-- PROCEDURESS:
+
+
+delimiter $$
+
+-- procedure: used to check eligibility before applying (for popup)
+create procedure sp_CheckPreEligibility(
+    in p_student_gpa decimal(3,2),
+    in p_scholarship_id int
 )
-RETURNS INT
-READS SQL DATA
-BEGIN
-    DECLARE submission_date DATE;
-    
-    SELECT DateApplied INTO submission_date
-    FROM Application
-    WHERE ApplicationID = p_application_id;
-    
-    RETURN DATEDIFF(CURDATE(), submission_date);
-END$$
+begin
+    declare required_gpa decimal(3,2);
 
--- Function 2: Get the total amount of money awarded by a specific provider
-CREATE FUNCTION fn_GetTotalAllocatedAmount(
-    p_provider_id INT
-)
-RETURNS DECIMAL(12,2)
-READS SQL DATA
-BEGIN
-    DECLARE total_awarded DECIMAL(12,2);
-    
-    SELECT SUM(A.Amount_Granted) INTO total_awarded
-    FROM Application A
-    JOIN Scholarship S ON A.ScholarshipID = S.ScholarshipID
-    WHERE S.ProviderID = p_provider_id AND A.Status = 'Awarded';
-    
-    RETURN IFNULL(total_awarded, 0.00);
-END$$
+    select min_GPA into required_gpa
+    from scholarship
+    where ScholarshipID = p_scholarship_id;
 
-DELIMITER ;
+    if p_student_gpa >= required_gpa then
+        select 0 as status_code, 
+               'Eligible! Your GPA meets the minimum requirement.' as message;
+    else
+        select 1 as status_code, 
+               concat('Ineligible: Your GPA is ', p_student_gpa, 
+                      ', but the minimum required is ', required_gpa, '.') as message;
+    end if;
+end$$
 
+delimiter ;
 
--- =======================================================
--- 5. STORED PROCEDURES
--- =======================================================
-DELIMITER $$
+-- procedure: provider for stats
 
--- Procedure 1: For the pre-application pop-up to check GPA
-CREATE PROCEDURE sp_CheckPreEligibility(
-    IN p_student_gpa DECIMAL(3,2),
-    IN p_scholarship_id INT
-)
-BEGIN
-    DECLARE required_gpa DECIMAL(3,2);
-    
-    SELECT min_GPA INTO required_gpa
-    FROM Scholarship
-    WHERE ScholarshipID = p_scholarship_id;
-    
-    IF p_student_gpa >= required_gpa THEN
-        SELECT 0 AS status_code, 'Eligible! Your GPA meets the minimum requirement.' AS message;
-    ELSE
-        SELECT 1 AS status_code, CONCAT('Ineligible: Your GPA is ', p_student_gpa, ', but the minimum is ', required_gpa, '.') AS message;
-    END IF;
-    
-END$$
+delimiter $$
 
-DELIMITER ;
-
--- =======================================================
--- STORED PROCEDURES FOR PROVIDER ANALYTICS
--- =======================================================
-
-DELIMITER $$
-
--- Get provider's scholarship performance
-CREATE PROCEDURE sp_GetProviderStats(
-    IN p_provider_id INT
-)
-BEGIN
-    SELECT 
+create procedure sp_GetProviderStats(in p_provider_id int)
+begin
+    select 
         S.ScholarshipID,
         S.Title,
         S.Amount,
         S.MaxStudents,
-        COUNT(A.ApplicationID) as TotalApplications,
-        SUM(CASE WHEN A.Status = 'Awarded' THEN 1 ELSE 0 END) as StudentsAwarded,
-        COALESCE(SUM(A.Amount_Granted), 0) as TotalAmountGranted
-    FROM Scholarship S
-    LEFT JOIN Application A ON S.ScholarshipID = A.ScholarshipID
-    WHERE S.ProviderID = p_provider_id
-    GROUP BY S.ScholarshipID, S.Title, S.Amount, S.MaxStudents;
-END$$
+        count(A.ApplicationID) as TotalApplications,
+        sum(case when A.Status = 'Awarded' then 1 else 0 end) as StudentsAwarded,
+        coalesce(sum(A.Amount_Granted), 0) as TotalAmountGranted
+    from scholarship S
+    left join application A on S.ScholarshipID = A.ScholarshipID
+    where S.ProviderID = p_provider_id
+    group by S.ScholarshipID, S.Title, S.Amount, S.MaxStudents;
+end$$
 
-DELIMITER ;
+delimiter ;
