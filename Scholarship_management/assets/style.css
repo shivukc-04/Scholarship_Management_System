@@ -1,0 +1,30 @@
+body {
+  font-family: 'Poppins', 'Roboto', sans-serif;
+  background: linear-gradient(120deg,#f5c528,#fc8565);
+}
+
+.stButton>button {
+  background-color: #3C82F5;
+  color: #fff;
+  border-radius: 6px;
+  font-weight: bold;
+  padding: 0.5em 2em;
+  transition: 0.2s;
+}
+
+.stButton>button:hover {
+  background-color: #265dc2;
+  color: #fff;
+  transform: scale(1.05);
+}
+
+.stMetric {
+  background: #FFFFFF !important;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(60,130,245,0.07);
+  padding: 1em;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Poppins', 'Roboto', sans-serif;
+}

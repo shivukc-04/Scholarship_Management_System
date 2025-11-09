@@ -1,0 +1,19 @@
+--- Security (CRITICAL) ---
+
+Ignore environment files
+
+.env
+*.env
+
+--- Python Cache ---
+
+pycache/
+*.pyc
+*.pyo
+*.pyd
+
+--- IDE / OS Files ---
+
+.vscode/
+.idea/
+.DS_Store
