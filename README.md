@@ -1,24 +1,24 @@
-# 🎓 Scholarship Management System
+#  Scholarship Management System
 
 A comprehensive, role-based web portal designed to automate the entire scholarship lifecycle—from student applications and document uploads to provider management, automated eligibility checks, and administrative award distribution. Built using **Python (Streamlit)** and **MySQL** with robust business logic enforced directly at the database layer via triggers, procedures, and functions.
 
 ---
 
-## ✨ Key Features & User Portals
+##  Key Features & User Portals
 
-### 👨‍🎓 Student Portal
+### Student Portal
 * **Account Registration & Login:** Secure authentication for student profiles.
 * **Smart Scholarship Discovery:** Browse open scholarships and filter by GPA, amount, and eligibility criteria.
 * **Application Tracking:** Monitor application statuses in real-time (`Pending`, `Approved`, `Rejected`, `Awarded`).
 * **Document Management:** Upload required academic transcripts, identity proofs, and income/caste certificates.
 * **Profile Management:** Keep academic details, college info, and GPA up to date.
 
-### 🏢 Provider Portal
+### Provider Portal
 * **Organization Registration:** Register and submit organizational details for admin approval.
 * **Scholarship Creation & Management:** Post new scholarships, define maximum seat caps, deadlines, and minimum GPA requirements.
 * **Metrics & Analytics:** Track total applicants, successful awardees, and total funds committed using interactive charts.
 
-### ⚙️ Admin Portal
+### Admin Portal
 * **Provider Approval Workflow:** Review, approve, or reject new provider signups before they can post scholarships.
 * **Application Review:** Oversee system-wide applications, update statuses, and grant scholarship awards.
 * **Capacity Safeguards:** Prevent over-awarding beyond scholarship limits.
@@ -26,7 +26,7 @@ A comprehensive, role-based web portal designed to automate the entire scholarsh
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 * **Frontend & UI:** Streamlit (Python interactive web framework), Plotly (Data visualization), Pillow (Image processing)
 * **Backend & Logic:** Python, Pandas, Python-Dotenv
@@ -34,7 +34,7 @@ A comprehensive, role-based web portal designed to automate the entire scholarsh
 
 ---
 
-## 🗄️ Database Architecture & Automated Business Rules
+## Database Architecture & Automated Business Rules
 
 The system leverages advanced MySQL features to maintain data integrity and automate core business rules inside `file1.sql`:
 * **GPA Eligibility Triggers:** Automatically prevent students from submitting applications if their GPA falls below the required threshold.
@@ -43,7 +43,7 @@ The system leverages advanced MySQL features to maintain data integrity and auto
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 Scholarship-Management-System/
